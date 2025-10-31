@@ -1,0 +1,152 @@
+
+<!DOCTYPE html>
+<html lang="he">
+<head>
+  <meta charset="UTF-8">
+  <title>ממיר עברית ↔ אנגלית</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#ffffff">
+  <link rel="manifest" href="manifest.json">
+  <style>
+    body {
+      font-family: Arial;
+      text-align: center;
+      margin: 20px;
+      direction: rtl;
+      background-color: #f0f0f0;
+    }
+    .container {
+      max-width: 400px;
+      margin: auto;
+      background: white;
+      padding: 20px;
+      border-radius: 10px;
+      box-shadow: 0 0 10px #ccc;
+    }
+    input, textarea {
+      width: 100%;
+      padding: 10px;
+      margin: 10px 0;
+      font-size: 16px;
+      box-sizing: border-box;
+    }
+    button {
+      padding: 10px 20px;
+      font-size: 16px;
+      margin: 5px;
+      cursor: pointer;
+    }
+    #directionLabel {
+      font-weight: bold;
+      margin-bottom: 10px;
+      display: block;
+    }
+    #installBtn {
+      background-color: #4CAF50;
+      color: white;
+      border: none;
+      display: none;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h2>ממיר מקלדת עברית ↔ אנגלית</h2>
+    <span id="directionLabel">כיוון: אנגלית → עברית</span>
+    <input type="text" id="inputText" placeholder="הקלד כאן">
+    <textarea id="outputText" rows="4" placeholder="תוצאה" readonly></textarea>
+    <button onclick="toggleDirection()">שנה כיוון</button>
+    <button onclick="copyText()">העתק</button>
+    <button id="installBtn">התקן אפליקציה</button>
+  </div>
+
+  <script>
+    let direction = "enToHe";
+    let deferredPrompt;
+
+    const enToHe = {
+      'a': 'ש', 'b': 'נ', 'c': 'ב', 'd': 'ג', 'e': 'ק', 'f': 'כ',
+      'g': 'ע', 'h': 'י', 'i': 'ן', 'j': 'ח', 'k': 'ל', 'l': 'ך',
+      'm': 'צ', 'n': 'מ', 'o': 'ם', 'p': 'פ', 'q': '/', 'r': 'ר',
+      's': 'ד', 't': 'א', 'u': 'ו', 'v': 'ה', 'w': '\'', 'x': 'ס',
+      'y': 'ט', 'z': 'ז',
+      ',': 'ת', '.': 'ץ', ';': 'ף', '[': ']', ']': '[', '\\': '\\',
+      '1': '1', '2': '2', '3': '3', '4': '4', '5': '5',
+      '6': '6', '7': '7', '8': '8', '9': '9', '0': '0',
+      ' ': ' '
+    };
+
+    const heToEn = {};
+    for (let key in enToHe) {
+      heToEn[enToHe[key]] = key;
+    }
+
+    function toggleDirection() {
+      direction = direction === "enToHe" ? "heToEn" : "enToHe";
+      document.getElementById("directionLabel").textContent =
+        direction === "enToHe" ? "כיוון: אנגלית → עברית" : "כיוון: עברית → אנגלית";
+      convertText();
+    }
+
+    function convertText() {
+      const input = document.getElementById("inputText").value.toLowerCase();
+      const map = direction === "enToHe" ? enToHe : heToEn;
+      let output = "";
+      for (let char of input) {
+        output += map[char] || char;
+      }
+      document.getElementById("outputText").value = output;
+      localStorage.setItem("lastInput", input);
+      localStorage.setItem("lastDirection", direction);
+    }
+
+    function copyText() {
+      const output = document.getElementById("outputText");
+      output.select();
+      output.setSelectionRange(0, 99999);
+      document.execCommand("copy");
+      alert("הטקסט הועתק!");
+    }
+
+    document.getElementById("inputText").addEventListener("input", convertText);
+
+    window.onload = function () {
+      const savedInput = localStorage.getItem("lastInput");
+      const savedDirection = localStorage.getItem("lastDirection");
+      if (savedInput) document.getElementById("inputText").value = savedInput;
+      if (savedDirection) direction = savedDirection;
+      document.getElementById("directionLabel").textContent =
+        direction === "enToHe" ? "כיוון: אנגלית → עברית" : "כיוון: עברית → אנגלית";
+      convertText();
+    };
+
+    // התקנת PWA
+    window.addEventListener('beforeinstallprompt', (e) => {
+      e.preventDefault();
+      deferredPrompt = e;
+      document.getElementById('installBtn').style.display = 'inline-block';
+    });
+
+    document.getElementById('installBtn').addEventListener('click', () => {
+      if (deferredPrompt) {
+        deferredPrompt.prompt();
+        deferredPrompt.userChoice.then((choiceResult) => {
+          if (choiceResult.outcome === 'accepted') {
+            console.log('המשתמש התקין את האפליקציה');
+          } else {
+            console.log('המשתמש ביטל את ההתקנה');
+          }
+          deferredPrompt = null;
+        });
+      }
+    });
+
+    // רישום Service Worker
+    if ("serviceWorker" in navigator) {
+      navigator.serviceWorker.register("sw.js")
+        .then(() => console.log("Service Worker נרשם"))
+        .catch(err => console.error("שגיאה ברישום Service Worker:", err));
+    }
+  </script>
+</body>
+</html>
